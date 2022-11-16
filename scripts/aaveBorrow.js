@@ -18,7 +18,9 @@ async function main() {
   //lendingpool contract needs to have access to pull the determined amount(WETH) from our wallet
 
   //approve  (approving lendingPool contract(aave) to use AMOUNT units from our account)
-  console.log("Approving LendingPool (Aave)");
+  console.log(
+    "Approving LendingPool (Aave) to take funds from WETH contract to deposit"
+  );
   await approveErc20(
     wethContractAddress,
     lendingPool.address,
@@ -59,12 +61,40 @@ async function main() {
   await borrowDai(daiTokenAddress, lendingPool, amountToBorrowWei, deployer);
   console.log("Again, Getting Data from your AAVE ..");
   await getBorrowUserData(lendingPool, deployer);
+  console.log("Repaying Aave...");
+  await repay(amountToBorrowWei, daiTokenAddress, lendingPool, deployer);
+  console.log("Again, Getting Data from your AAVE ..");
+  await getBorrowUserData(lendingPool, deployer);
+  const FinalC = await erc20Token.balanceOf(deployer);
+  console.log(
+    "You will still have very minor amount of debt to pay because of the interset.You can clear that by using platform like uniswap to clear that."
+  );
+  console.log(
+    `Your WETH Contract (Token) now has balace Of : ${(
+      FinalC / 1e18
+    ).toString()} WETH`
+  );
+  //
+  //
+  //
+  async function repay(amount, daiAddress, lendingPool, account) {
+    console.log(
+      "Approving LendingPool (Aave) to use our funds from account to repay the borrowed account"
+    );
+    //IMPORTANT - daiContract inherits IERC20 interface so we can use IERC20 interface and daicontract address  so that daicontract has permission for lendingpool contract to use our funds
+    await approveErc20(daiAddress, lendingPool.address, amount, account);
+    console.log("Repaying funds by using your account");
+    const repayTx = await lendingPool.repay(daiAddress, amount, 1, account);
+    await repayTx.wait(1);
+    console.log("Repayed !!");
+  }
   async function borrowDai(
     daiAddress,
     lendingPool,
     amountToBorrowWei,
     account
   ) {
+    console.log("Aave is using DaiToken Contract to borrow funds...");
     const borrowTx = await lendingPool.borrow(
       daiAddress,
       amountToBorrowWei,
@@ -76,6 +106,7 @@ async function main() {
 
     console.log(`Borrowed ${(amountToBorrowWei / 1e18).toString()} from AAVE`);
   }
+
   async function getDaiPrice() {
     const daiEthPriceFeed = await ethers.getContractAt(
       "AggregatorV3Interface",
