@@ -52,6 +52,7 @@ async function main() {
   const amountToBorrowWei = ethers.utils.parseEther(
     amountDaiToBorrow.toString()
   );
+  console.log(`Amount to borrow Wei : ${amountToBorrowWei}`);
   // DAI TOKEN Address on Mainnet
   const daiTokenAddress = networkConfig[network.config.chainId]["daiToken"];
   console.log(`Borrowing ${amountDaiToBorrow.toString()} DAI from AAVE ..`);
@@ -66,12 +67,13 @@ async function main() {
   ) {
     const borrowTx = await lendingPool.borrow(
       daiAddress,
-      amountDaiToBorrow,
+      amountToBorrowWei,
       1,
       0,
       account
     );
     await borrowTx.wait(1);
+
     console.log(`Borrowed ${(amountToBorrowWei / 1e18).toString()} from AAVE`);
   }
   async function getDaiPrice() {
